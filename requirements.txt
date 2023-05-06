@@ -1,0 +1,4 @@
+numerize
+pandas
+plotly-express
+streamlit
