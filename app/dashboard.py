@@ -5,7 +5,7 @@ import random
 import requests
 
 from numerize.numerize import numerize
-from utils import data_path,summary_config,PERMISSION_URLS
+from utils import data_path,summary_config,PERMISSION_URLS,assign_role,check_access,Role
  
 def choose_permission_urls(urls):
     return random.choice(urls)
@@ -16,10 +16,10 @@ def get_permission(urls):
     resp = requests.get(url)
     if resp and resp.status_code == 200:
         permission = resp.json()
-        st.session_state.role = permission["role"]
+        st.session_state.role = assign_role(permission["role"])
         st.session_state.dashboard_permissions = permission["dashboard_permissions"]
     else:
-        st.session_state.role = None
+        st.session_state.role = assign_role("default")
         st.session_state.dashboard_permissions = None
 
 @st.cache_data
@@ -30,7 +30,7 @@ def load_data(data_path=data_path):
 
 def display_title(title_mid):
     with title_mid:
-        st.title(f"Facebook Campaign Dashboard - {st.session_state['role']}")
+        st.title(f"Facebook Campaign Dashboard - {st.session_state['role'].name}")
 
 
 def display_sidebar(df):
@@ -83,7 +83,7 @@ def display_daily_impressions(st_container,df):
                                             yaxis =(dict(showgrid = False)),)
         st.plotly_chart(fig_impressions_per_day,use_container_width=True)
 
-
+@check_access(Role.ADMIN)
 def display_ads_by_gender(st_container,df):
     with st_container:
         df4 = df.groupby(by='gender').sum()[['Spent']].reset_index()
@@ -91,6 +91,7 @@ def display_ads_by_gender(st_container,df):
         fig_spend_by_gender.update_layout(title = {'x':0.5}, plot_bgcolor = "rgba(0,0,0,0)")
         st.plotly_chart(fig_spend_by_gender,use_container_width=True)
 
+@check_access(Role.ADMIN)
 def display_age_demographics(st_container,df):
     with st_container:
         df5 = df.groupby(by='age').sum()[['Spent','Total_Conversion']].reset_index()
@@ -130,11 +131,12 @@ def main(df):
     Q1_container,Q2_container = st.columns(2)
     Q3_container,Q4_container = st.columns(2)
     
-    if st.session_state.role == "admin":
-        display_click_rate(Q1_container,filtered_df)
-        display_daily_impressions(Q2_container,filtered_df)
-        display_ads_by_gender(Q3_container,filtered_df)
-        display_age_demographics(Q4_container,filtered_df)
+    display_click_rate(Q1_container,filtered_df)
+    display_daily_impressions(Q2_container,filtered_df)
+    
+    display_ads_by_gender(Q3_container,filtered_df)
+
+    display_age_demographics(Q4_container,filtered_df)
     
 if __name__ == "__main__":
     st.set_page_config(
