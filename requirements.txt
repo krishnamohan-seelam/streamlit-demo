@@ -1,4 +1,5 @@
 numerize
 pandas
 plotly-express
+seaborn
 streamlit
