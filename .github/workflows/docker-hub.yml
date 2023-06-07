@@ -48,7 +48,7 @@ jobs:
               uses: docker/build-push-action@v4
               with:
                 context: .
-                file: Dockerfile
+                file: ./Dockerfile
                 push: true
                 tags: krishnamohanseelam/streamlit-demo:latest
                 
